@@ -244,7 +244,7 @@ This graph can be used to find the knee point, a place where the curve distinctl
 ```{R}
 
 listSiteData <- as.matrix(siteData)
-sc<- specc(x=listSiteData, centers=4)
+sc<- specc(x=listSiteData, centers=4, iterations=600)
 size(sc)
 centers(sc)
 withinss(sc)
@@ -286,7 +286,6 @@ doesn't appear to have a large number of outliers or unusual features outside of
 
 ```{R}
 
-WTempData %>% ggplot(aes(x = water_temp)) + geom_histogram(bins = 50) + labs(title = "Water Temp Histogram, fitted model") +
-  geom_smooth(method = "glm")
+WTempData %>% ggplot(aes(x = water_temp)) + geom_histogram(bins = 50) + labs(title = "Water Temp Histogram, fitted model") #+  geom_smooth(method = "glm")
 ggsave("plot_7.3.png",device = "png", dpi = 800,limitsize = FALSE)
 ```
