@@ -1,0 +1,6 @@
+name: "A1-SIT743 - Simon Levett"
+navbar:
+  title: "Simon Levett A1 SIT743"
+  left:
+    - text: "Assignment work"
+      href: index.html

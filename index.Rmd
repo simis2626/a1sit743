@@ -1,0 +1,292 @@
+---
+title: "Simon Levett SIT743 - A1"
+---
+
+```{R}
+#Libraries used by the assignment code.
+library(ggplot2)
+library(magrittr)
+library(dplyr)
+library(tidyr)
+library(kernlab)
+```
+
+
+```{R}
+# Creates the sameple data as instructed in the assignment notes, saves to file.
+# For working copy, code is commented, with my personal sample read from file.
+the.data <- as.matrix(read.csv("ThursdayIsland.csv", header = TRUE,
+sep = ","))
+#my.data <- the.data [sample(1:15000,5000),c(1:6)]
+#write.table(my.data,"SimonLevett-218559868-TIMyData.txt")
+TIsample <- read.table("SimonLevett-218559868-TIMyData.txt", header = TRUE)
+```
+
+
+
+
+## Question 1
+### 1.1 Histogram of Humidity
+```{R}
+
+TIsample %<>% tibble::as_tibble(TIsample)
+
+ggplot(TIsample) + geom_histogram(mapping = aes(Humidity....), bins = 30)
+ggsave("plot_1.1.1.png",device = "png", dpi = 800,limitsize = FALSE)
+```
+This dataset appears to be approximately normally distributed with a slight negative skew.
+There are minimal outliers and the data appears to be largely contigous across its range.
+
+### 1.1 Histogram of Maximum Wind Speed
+```{R}
+ggplot(TIsample) + geom_histogram(mapping = aes(maximum.Wind.speed..km.h.),bins = 45)
+ggsave("plot_1.1.2.png",device = "png", dpi = 800,limitsize = FALSE)
+```
+
+This data appears to have additional characteristics, where there is an local maximum at approximately the 10Kph point, this follows onto a possibly normally distributed set with compact mean and standard deviation (i.e. the histogram shows a tall, skinny global maximum). This distribution appears to be bimodal and is not symmetric
+
+
+### Question 1.2
+
+Parallel Box plot using Air Temp and Water Temp.
+
+```{R}
+
+#Tidying the data into "Tidy Data" one observation per row
+waterairtemp <- TIsample %>% select(water.temp..deg.celcius., Air.temp..deg.celcius.) %>% gather('water.temp..deg.celcius.', 'Air.temp..deg.celcius.', key="Measure",value="Temperature")
+
+#plotting parallel box plots.
+waterairtemp %>% ggplot() + geom_boxplot(aes(y = Temperature, x= Measure))
+ggsave("plot_1.2.png",device = "png", dpi = 800,limitsize = FALSE)
+
+waterairtemp %>% filter(Measure=="water.temp..deg.celcius.") %>% ggplot() + geom_histogram(aes(x=Temperature)) + labs(title="Water Temp")
+waterairtemp %>% filter(Measure=="Air.temp..deg.celcius.") %>% ggplot() + geom_histogram(aes(x=Temperature), bins = 35) + labs(title="Air Temp")
+```
+
+
+### Five number summaries
+```{R}
+print("Air Temperature")
+waterairtemp %>% filter(Measure=="Air.temp..deg.celcius.") %>% select(Temperature) %$% summary(.$Temperature)
+print("Water Temperature")
+waterairtemp %>% filter(Measure=="water.temp..deg.celcius.") %>% select(Temperature) %$% summary(.$Temperature)
+
+```
+
+
+Comments:
+
+Water temperature has a more stable range than air temperature which matches our intuitive understanding of the way large masses of water react to temperature flucuations.
+The compact and high (as compared with Air Temperature) range for water temperature matches the understanding that this body of water is located in a tropical climate north of Queensland.
+Air Temperature has both a larger range and IQR, suggesting that is it more susceptible to temperature fluctuations than water. It is also notable that the air temperature range is centered around the mean while water temperature has a distinct negative skew (more values in the higher range.)
+Both groups of data have similar max values (29.9 and 29.6 degrees) however the susceptibility to change of air temperature can be seen by contrasting that similarity with the Q3 values of 29.23 for water and 27.7 for air.
+
+
+### Question 1.3
+
+Air pressure data analysis
+
+```{R}
+
+airPressure <- TIsample %>% select(Air.Pressure..Hecta.pascals.) %>% transmute(air_pressure=Air.Pressure..Hecta.pascals.)
+summary(airPressure$air_pressure)
+airPressure %>% ggplot() + geom_histogram(aes(air_pressure), bins = 25)
+ggsave("plot_1.3.1.png",device = "png", dpi = 800,limitsize = FALSE)
+airPressure %>% ggplot()+geom_boxplot(aes(y=air_pressure))
+ggsave("plot_1.3.2.png",device = "png", dpi = 800,limitsize = FALSE)
+airPressure %>% ggplot()+geom_qq(aes(sample=air_pressure))
+ggsave("plot_1.3.3.png",device = "png", dpi = 800,limitsize = FALSE)
+print("Median")
+median(airPressure$air_pressure)
+print("IQR")
+IQR(airPressure$air_pressure)
+print("Standard Deviation")
+sd(airPressure$air_pressure)
+print("Range")
+1016 - 999.8
+
+```
+
+Because of the dsitribution of the data (skewwed), I advocate for the median being used as the best indicator of the centre of the dataset as this most accurately captures the centre value around which a visitor could expect the air pressure to be during a visit on a random time during the 3 month period the dataset covers. This median value is 1010 Hectopascals
+The best description of spread is the comparison of the IQR with the full range of the dataset. This gives the person interpreting the data the best understanding of what the 'middle 50%' of pressures are, and what the most extreme values are. For a visitor to Thursday Island, this gives you an understanding of the pressure 'most' of the time, but also ensuring one can be prepared for the extremes that may occur during a visit.
+For this dataset, the IQR is 4 hectopascals, with a range of 16.2 hectopascals from a maximum of 1016 to 999.8 hectopascals.
+
+
+### Question 1.4
+
+Air Temp vs. Water Temp
+
+```{R}
+
+waterair1_4 <- TIsample %>% select(water.temp..deg.celcius., Air.temp..deg.celcius.) %>% transmute("Water_Temp"=water.temp..deg.celcius., "Air_Temp"=Air.temp..deg.celcius.) %>% slice(1:1000)
+
+plot <- waterair1_4 %>% ggplot(aes(x=Air_Temp,y=`Water_Temp`)) + geom_point() + stat_smooth(method = "lm",col="red", se = FALSE) + labs(title="Air v Water Plot")
+model <-  lm(Water_Temp ~ Air_Temp, waterair1_4)
+plot
+ggsave("plot_1.4.png",device = "png", dpi = 800,limitsize = FALSE)
+print("Model Parameters:")
+model$coefficients
+summaryModel <- summary(model)
+print("R squared/Coefficient of Determination:")
+summaryModel$r.squared
+print("Corellation coefficient")
+cor(waterair1_4$Air_Temp,waterair1_4$Water_Temp)
+```
+
+The linear regression equation is Water_Temp = 19.9961537 + 0.3284578 * Air_Temp
+Coefficient of Determination is 0.4907737
+Corellation coefficient is 0.7005524
+These results suggest that 49% of the change in Water_Temp is explained by the relationship captured in the model comprising Air_Temp. 
+However the corellation coefficient suggests that there may be some additional variable that hasn't been captured that has a relationship with both Air_Temp and Water_Temp which is contributing to the 0.7 corellation coefficient.
+Finally, and simply we can conclude that Air_Temp is positively corellated with Water_Temp.
+
+
+## Question 2
+2.1.a
+P(J) = 4400/8000 = 55%
+
+2.1.b
+P(C n N)= 800/8000 = 10%
+
+2.1.c
+P(J | V)= 1200/2000 = 60%
+
+2.1.d
+P(Q | C)= 1800/3600 = 50%
+
+2.1.e
+P(V u J) = 2200/8000 + 4400/8000 - 1200/8000 = 67.50%
+
+2.1.f
+Marginal distribution of PowerBoat type
+```{R}
+boats <- tribble(
+  ~Boat_Type, ~Marginal_Probability,
+  "Cruiser", 3600/8000, 
+  "Jet Boat", 4400/8000
+)
+knitr::kable(boats)
+```
+
+
+2.1.g
+No they are not mutually exclusive because for events to be mutually exclusive they must have no outcomes in common. In the case of boat and state, it is possible to both have a boat, and be in a particular state.
+
+2.1.h
+No, they are not independent. This is because independence requires that the outcome of one event does not influence the probability of the other. This is not true in this case, because if I were to tell you I live in Queensland, that gives you additional information to make your probabilistic guess about my boat type more accurate.
+
+2.2
+34.29% using Bayes Rule
+
+## Question 3
+
+### Question 3.1
+Frequentists treat prior knowledge as a fixed parameter to be estimated perfectly, allowing the user to arrive at a clear, fixed prediction of future outcomes.
+Bayesian techniques include a more blended approach using observed data, but also knowledge of the underlying formula that generates the data.
+### Question 3.2
+Conjugate priors gives convienience to statisticians in that by choosing a conjugate prior mathematical properties allow us to understand that the posterior will be of the same distribution type.
+e.g. Normal likelihood + normal prior => results in a normal posterior probability distribution.
+### Question 3.3
+Normal distributions
+Binomial and Beta
+
+## Question 4
+
+
+## Question 5
+
+## Question 6
+### Question 6.1
+6.1.a
+
+```{R}
+siteData <- as_tibble(read.table("SITEdata2019Aug.txt"))
+
+siteData %>% ggplot(aes(x = V1, y=V2)) + geom_point() + labs(title="SiteData Plot")
+ggsave("plot_6.1.a.png",device = "png", dpi = 800,limitsize = FALSE)
+
+```
+
+6.1.b
+From visual examination there appear to be 4 distinct clusters (S, O, square, E)
+
+6.1.c
+
+```{R}
+
+cl <- kmeans(siteData,4, iter.max = 8)
+siteData %>% ggplot(aes(x = V1, y=V2)) + geom_point(aes(color=cl$cluster)) + scale_color_gradientn(colours = rainbow(n = 4)) + labs(title="SiteData kmeans")
+ggsave("plot_6.1.c.png",device = "png", dpi = 800,limitsize = FALSE)
+```
+
+
+The clusters shown highlight the limitations of kmeans clusters which assumes implicitly that the clusters are spherical/circular (for euclidean distances) depending on the dimensions. The is because the 'loss function' drives towards spherical/circular clusters via attach to closest cluster, cluster centers are defined as the mean of the points in the cluster.
+
+6.1.d
+
+```{R}
+#Sourced from week 4 lecture slides.
+totwss= array(,c(20,1))
+for (i in 2:20){
+  print(i)
+  totwss[i,1]=(kmeans(siteData,centers=i))$tot.withinss
+  print(totwss[i])
+  }
+plot(totwss, main="total within sum of squres(totWSS) with diiferentK value")
+totwss
+
+```
+
+This graph can be used to find the knee point, a place where the curve distinctly gets lower on the totwss axis. This helps pick the number of clusters that appear in the data set, because for an incremental increase in number of clusters, we're able to get a substantially more representative clusters as shown by totwss
+
+### Question 6.2
+
+```{R}
+
+listSiteData <- as.matrix(siteData)
+sc<- specc(x=listSiteData, centers=4)
+size(sc)
+centers(sc)
+withinss(sc)
+siteData %>% ggplot(aes(x = V1, y=V2)) + geom_point(aes(color=cl$cluster)) + scale_color_gradientn(colours = rainbow(n = 4)) + labs(title="SiteData kmeans")
+siteData %>% ggplot(aes(x = V1, y=V2)) + geom_point(aes(color=sc@.Data)) + scale_color_gradientn(colours = rainbow(n = 4)) + labs(title="SiteData spectral clustering")
+ggsave("plot_6.2.png",device = "png", dpi = 800,limitsize = FALSE)
+
+```
+
+The clusters from spectral clustering show the better ability to handle the grouping of data that doesn't conform to the expectations of kmeans clustering (spherical/circular clusters or elliptical clusters depending on the distance optimisation used). The spectral clustering method is better able to capture these patterns based on the graph analysis elements of the algorithm. In this example the clusters produced by the spectral clustering technique are more likely to be meaningful in a business or operational environment.
+
+## Question 7
+### Question 7.1
+
+```{R}
+thursdayFull <- readr::read_csv("ThursdayIsland.csv")
+WTempData <- thursdayFull %>% transmute(water_temp=`water temp (deg celcius)`)
+
+WTempData %>% mutate(row_number=row_number()) %>% ggplot(aes(x = row_number, y = water_temp)) + geom_line() + labs(title = "Water Temp over row_index")
+ggsave("plot_7.1.png",device = "png", dpi = 800,limitsize = FALSE)
+```
+
+### Question 7.2
+
+```{R}
+
+WTempData %>% ggplot(aes(x = water_temp)) + geom_histogram(bins = 50) + labs(title = "Water Temp Histogram")
+ggsave("plot_7.2.png",device = "png", dpi = 800,limitsize = FALSE)
+```
+
+This variable is:
+Not symmetric
+negatively skewwed
+Is bimodal (2 modes)
+doesn't appear to have a large number of outliers or unusual features outside of those mentioned above.
+
+
+### Question 7.3
+
+```{R}
+
+WTempData %>% ggplot(aes(x = water_temp)) + geom_histogram(bins = 50) + labs(title = "Water Temp Histogram, fitted model") +
+  geom_smooth(method = "glm")
+ggsave("plot_7.3.png",device = "png", dpi = 800,limitsize = FALSE)
+```
