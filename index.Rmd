@@ -9,6 +9,7 @@ library(magrittr)
 library(dplyr)
 library(tidyr)
 library(kernlab)
+library(mixtools)
 ```
 
 
@@ -286,25 +287,61 @@ doesn't appear to have a large number of outliers or unusual features outside of
 
 ```{R}
 
-WTempData %>% ggplot(aes(x = water_temp)) + geom_histogram(bins = 50) + labs(title = "Water Temp Histogram, fitted model") 
+WTempData %>% ggplot(aes(x = water_temp)) + geom_histogram(bins = 50) + labs(title = "Water Temp Histogram") 
 ggsave("plot_7.3.png",device = "png", dpi = 800,limitsize = FALSE)
-hist(WTempData$water_temp)
 meanwt <- mean(WTempData$water_temp)
 sdwt <- sd(WTempData$water_temp)
-x <- seq(26.5,30, by = 0.05)
+x <- seq(26.5,30, by = 0.001)
 normalDist <- dnorm(x, meanwt, sdwt)
 normalDist <- normalDist/sum(normalDist)
 
-png("plot_7.3.png", width = 1200, height = 900, res = 120)
+png("plot_7.3.1.png", width = 1200, height = 900, res = 120)
 plot(hist(WTempData$water_temp,
      plot = FALSE),
-    ylab = "Frequency",
+    ylab = "",
      xlab = "Temperature",
      main = "Water Temperature: Histogram and Single Gaussian model",
+     yaxt='n',
      xlim = c(26.5,30))
 par(new = TRUE)
 plot(x = x, y= normalDist, xlab = "", ylab = "", main="", axes = FALSE, type = "l")
 dev.off()
+
+meanwt
+sdwt
+
+
+```
+
+
+### Question 7.4
+
+
+
+```{R}
+mixmdl = normalmixEM(WTempData$water_temp, k = 2)
+mixmdl$lambda
+mixmdl$mu
+mixmdl$sigma
+```
+
+
+
+
+### Question 7.5
+
+```{r}
+png("plot_7.5.png", width = 1200, height = 900, res = 120)
+plot(mixmdl,which=2)
+lines(density(WTempData$water_temp), lty=2, lwd=2)
+
+```
+
+### Question 7.6
+
+```{R}
+png("plot_7.6.png", width = 1200, height = 900, res = 120)
+plot(mixmdl$all.loglik)
 
 
 
