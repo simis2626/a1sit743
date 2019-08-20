@@ -312,7 +312,8 @@ sdwt
 
 
 ```
-
+Mean 28.77575
+SD 0.6118357
 
 ### Question 7.4
 
@@ -325,7 +326,9 @@ mixmdl$mu
 mixmdl$sigma
 ```
 
-
+Mixing Coeff 0.3048819 0.6951181
+Mean 27.98183 29.12396
+SD 0.372443 0.282750
 
 
 ### Question 7.5
