@@ -306,6 +306,17 @@ plot(hist(WTempData$water_temp,
 par(new = TRUE)
 plot(x = x, y= normalDist, xlab = "", ylab = "", main="", axes = FALSE, type = "l")
 dev.off()
+#second run to output plot in rmarkdown
+plot(hist(WTempData$water_temp,
+     plot = FALSE),
+    ylab = "",
+     xlab = "Temperature",
+     main = "Water Temperature: Histogram and Single Gaussian model",
+     yaxt='n',
+     xlim = c(26.5,30))
+par(new = TRUE)
+plot(x = x, y= normalDist, xlab = "", ylab = "", main="", axes = FALSE, type = "l")
+
 
 meanwt
 sdwt
@@ -320,7 +331,7 @@ SD 0.6118357
 
 
 ```{R}
-mixmdl = normalmixEM(WTempData$water_temp, k = 2)
+mixmdl = normalmixEM(WTempData$water_temp, k = 30, maxit = 50000)
 mixmdl$lambda
 mixmdl$mu
 mixmdl$sigma
@@ -337,7 +348,10 @@ SD 0.372443 0.282750
 png("plot_7.5.png", width = 1200, height = 900, res = 120)
 plot(mixmdl,which=2)
 lines(density(WTempData$water_temp), lty=2, lwd=2)
-
+dev.off()
+#second run to output plot in rmarkdown
+plot(mixmdl,which=2)
+lines(density(WTempData$water_temp), lty=2, lwd=2)
 ```
 
 ### Question 7.6
@@ -345,7 +359,34 @@ lines(density(WTempData$water_temp), lty=2, lwd=2)
 ```{R}
 png("plot_7.6.png", width = 1200, height = 900, res = 120)
 plot(mixmdl$all.loglik)
-
-
-
+dev.off()
+#second run to output plot in rmarkdown
+plot(mixmdl$all.loglik)
 ```
+
+The plot of all of the log likelihoods for each iteration of the fitting exercise shows how the process optimises the log likelihood.
+In this case we can observe that an optimum log-likelihood is achieved at approximately 27 iterations, where the curve plateaus.
+
+
+### Question 7.7
+
+```{R}
+png("plot_7.7.png", width = 1200, height = 900, res = 120)
+plot(x = x, y= normalDist, xlab = "", ylab = "", main="", axes = FALSE, type = "l")
+par(new = TRUE)
+plot(mixmdl, which = 2)
+lines(density(WTempData$water_temp), lty=2, lwd=2)
+dev.off()
+#second run to output plot in rmarkdown
+plot(x = x, y= normalDist, xlab = "", ylab = "", main="", axes = FALSE, type = "l")
+par(new = TRUE)
+plot(mixmdl, which = 2)
+lines(density(WTempData$water_temp), lty=2, lwd=2)
+```
+
+While the unimodal gaussian does coarsely follow the shape of the distribution as a whole, it pales in comparison to the GGM, which tighly follows the distribution. The increase in accuracy of the GMM would be experienced in the local minimum in the distribution for values between 28.15 through 28.75. These values are where the unimodal gaussian fails to capture the characteristics of the data distribution.
+
+### Question 7.8
+
+The main problem that can occur when using MLE to optimise a GMM is that the optimisation problem can reach a point where it generates a gaussian model that is very narrow such that it sits exactly on one data point. This is called presence of a singularity. When that occurs the likelihood and log-likelihood functions approach infinity and this creates an overfitted and potentially meaningless model.
+To overcome this problem, the best thing to do is to monitor the sigma and mu values throughout the optimisation. Where the sigma value becomes too small, and you suspect this singularity issue. You can reset the mu and sigma values to larger values and begin the optimisation again.
