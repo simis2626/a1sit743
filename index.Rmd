@@ -10,6 +10,7 @@ library(dplyr)
 library(tidyr)
 library(kernlab)
 library(mixtools)
+library(bolstad)
 ```
 
 
@@ -196,6 +197,53 @@ Binomial and Beta
 
 ## Question 5
 
+
+Random sample of n.
+mu = 80cm
+Normal dist( mu, 5cm)
+
+Prior = normal(100,10)
+
+### Question 5.a
+
+Prior is Normal P(θ) ~ N(100, 10^2)
+Likelihood is Normal P(X|θ) ~ N(θ,5^2)
+
+Posterior is Normal with P(θ|X) ~ N(μ, 𝜎)(SIMON SUBSCRIPT N
+
+### Question 5.b
+
+n=10
+```{R}
+sigma = sqrt(25/35)
+sigma
+
+mean = (25/35)*(((80*10)/25)+1)
+mean
+```
+### Question 5.c
+
+```{R}
+sigma = sqrt(25/(200+25))
+sigma
+
+mean = 25/(200+25)*(((80*200)/25)+1)
+mean
+```
+
+As more data is included the prior information becomes less important, and the bayseian inference moves towards the information provided by the liklihood.
+
+
+### Question 5.d
+
+
+
+```{R}
+
+```
+
+
+
 ## Question 6
 ### Question 6.1
 6.1.a
@@ -245,7 +293,7 @@ This graph can be used to find the knee point, a place where the curve distinctl
 ```{R}
 
 listSiteData <- as.matrix(siteData)
-sc<- specc(x=listSiteData, centers=4, iterations=600)
+sc<- specc(x=listSiteData, centers=4, iterations=6000)
 size(sc)
 centers(sc)
 withinss(sc)
@@ -331,7 +379,7 @@ SD 0.6118357
 
 
 ```{R}
-mixmdl = normalmixEM(WTempData$water_temp, k = 30, maxit = 50000)
+mixmdl = normalmixEM(WTempData$water_temp, k = 2, maxit = 150)
 mixmdl$lambda
 mixmdl$mu
 mixmdl$sigma
