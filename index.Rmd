@@ -10,7 +10,7 @@ library(dplyr)
 library(tidyr)
 library(kernlab)
 library(mixtools)
-library(bolstad)
+library(Bolstad)
 ```
 
 
